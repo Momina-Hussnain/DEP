@@ -8,7 +8,7 @@ public class Task {
     private String category;
 
     // Getters and setters
-    // ...
+
 }
 @Dao
 public interface TaskDao {
@@ -58,5 +58,88 @@ public interface TaskDao {
             Intent intent = new Intent(MainActivity.this, AddEditTaskActivity.class);
             startActivity(intent);
         });
+    }public class AddEditTaskActivity extends AppCompatActivity {
+    private EditText editTextTaskName;
+    private EditText editTextTaskDescription;
+    private EditText editTextTaskDueDate;
+    private EditText editTextTaskCategory;
+    private Button buttonSaveTask;
+    private AppDatabase db;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_add_edit_task);
+
+        editTextTaskName = findViewById(R.id.editTextTaskName);
+        editTextTaskDescription = findViewById(R.id.editTextTaskDescription);
+        editTextTaskDueDate = findViewById(R.id.editTextTaskDueDate);
+        editTextTaskCategory = findViewById(R.id.editTextTaskCategory);
+        buttonSaveTask = findViewById(R.id.buttonSaveTask);
+
+        db = AppDatabase.getDatabase(getApplicationContext());
+
+        buttonSaveTask.setOnClickListener(view -> {
+            final Task task = new Task();
+            task.setName(editTextTaskName.getText().toString());
+            task.setDescription(editTextTaskDescription.getText().toString());
+            task.setDueDate(editTextTaskDueDate.getText().toString());
+            task.setCategory(editTextTaskCategory.getText().toString());
+
+            new AsyncTask<Void, Void, Void>() {
+                @Override
+                protected Void doInBackground(Void... voids) {
+                    db.taskDao().insert(task);
+                    return null;
+                }
+
+                @Override
+                protected void onPostExecute(Void aVoid) {
+                    super.onPostExecute(aVoid);
+                    finish();
+                }
+            }.execute();
+        });
     }
+}
+public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder> {
+    private List<Task> tasks;
+
+    public TaskAdapter(List<Task> tasks) {
+        this.tasks = tasks;
+    }
+
+    @NonNull
+    @Override
+    public TaskViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.task_item, parent, false);
+        return new TaskViewHolder(view);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull TaskViewHolder holder, int position) {
+        Task task = tasks.get(position);
+        holder.textViewTaskName.setText(task.getName());
+        holder.textViewTaskDueDate.setText(task.getDueDate());
+        holder.textViewTaskCategory.setText(task.getCategory());
+    }
+
+    @Override
+    public int getItemCount() {
+        return tasks.size();
+    }
+
+    public static class TaskViewHolder extends RecyclerView.ViewHolder {
+        public TextView textViewTaskName;
+        public TextView textViewTaskDueDate;
+        public TextView textViewTaskCategory;
+
+        public TaskViewHolder(@NonNull View itemView) {
+            super(itemView);
+            textViewTaskName = itemView.findViewById(R.id.textViewTaskName);
+            textViewTaskDueDate = itemView.findViewById(R.id.textViewTaskDueDate);
+            textViewTaskCategory = itemView.findViewById(R.id.textViewTaskCategory);
+        }
+    }
+}
 }
