@@ -1,0 +1,62 @@
+@Entity(tableName = "tasks")
+public class Task {
+    @PrimaryKey(autoGenerate = true)
+    private int id;
+    private String name;
+    private String description;
+    private String dueDate;
+    private String category;
+
+    // Getters and setters
+    // ...
+}
+@Dao
+public interface TaskDao {
+    @Query("SELECT * FROM tasks ORDER BY dueDate DESC")
+    List<Task> getAllTasks();
+
+    @Insert
+    void insert(Task task);
+
+    @Update
+    void update(Task task);
+
+    @Delete
+    void delete(Task task);
+}public class MainActivity extends AppCompatActivity {
+    private RecyclerView recyclerView;
+    private TaskAdapter adapter;
+    private FloatingActionButton fab;
+    private AppDatabase db;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        recyclerView = findViewById(R.id.recyclerView);
+        fab = findViewById(R.id.fab);
+
+        db = AppDatabase.getDatabase(getApplicationContext());
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        new AsyncTask<Void, Void, List<Task>>() {
+            @Override
+            protected List<Task> doInBackground(Void... voids) {
+                return db.taskDao().getAllTasks();
+            }
+
+            @Override
+            protected void onPostExecute(List<Task> tasks) {
+                super.onPostExecute(tasks);
+                adapter = new TaskAdapter(tasks);
+                recyclerView.setAdapter(adapter);
+            }
+        }.execute();
+
+        fab.setOnClickListener(view -> {
+            Intent intent = new Intent(MainActivity.this, AddEditTaskActivity.class);
+            startActivity(intent);
+        });
+    }
+}
